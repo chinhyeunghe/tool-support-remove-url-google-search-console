@@ -7,6 +7,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import ElementClickInterceptedException
 from PIL import Image
 import csv
 import time
@@ -123,28 +124,37 @@ class URLRemoverApp(ctk.CTk):
         self.log(f"✔ Đã vào trang Removals của domain: {domain}")
 
         try:
-            for url in self.urls:
+            for index, url in enumerate(self.urls, start=1):
                 try:
+
+                    if index % 10 == 0:
+                        driver.refresh()
+                        WebDriverWait(driver, 20).until(lambda d: "removals" in d.current_url)
+                        time.sleep(2)
+
                     # Bấm nút thêm URL mới
                     menu_button = WebDriverWait(driver, 10).until(
                         EC.element_to_be_clickable((By.CLASS_NAME, "ZGldwb"))
                         # EC.element_to_be_clickable((By.XPATH, "/html/body/div[8]/c-wiz[4]/div/div[2]/div/div/div/div/div[2]/span[1]/div/div/div/div[1]/div/div[2]/div"))
                     )
-                    menu_button.click()
+                    # menu_button.click()
+                    driver.execute_script("arguments[0].click();", menu_button)
+
 
                     # Nhập URL cần xóa
                     url_input = WebDriverWait(driver, 20).until(
-                        # EC.presence_of_element_located((By.CLASS_NAME, 'VfPpkd-fmcmS-wGMbrd'))
-                        EC.presence_of_element_located((By.XPATH, "/html/body/div[8]/div[6]/div/div[2]/span/div/div/div[2]/span[1]/div[2]/label/input"))
+                        EC.presence_of_element_located((By.CLASS_NAME, 'VfPpkd-fmcmS-wGMbrd'))
+                        # EC.presence_of_element_located((By.XPATH, "/html/body/div[8]/div[6]/div/div[2]/span/div/div/div[2]/span[1]/div[2]/label/input"))
                     )
 
                     url_input.clear()
                     url_input.send_keys(url)
-                    self.log(f"✔ Đã điền URL: {url}")
+                    self.log(f"({index}/{len(self.urls)}) ✔ Đã điền URL: {url}")
 
                     # Click nút tiếp theo
                     button_next = WebDriverWait(driver, 20).until(
-                        EC.element_to_be_clickable((By.XPATH, "/html/body/div[8]/div[6]/div/div[2]/div[3]/div[2]"))
+                        # EC.presence_of_element_located((By.CLASS_NAME, 'tWntE'))
+                        EC.element_to_be_clickable((By.XPATH, "/html/body/div[9]/div[6]/div/div[2]/div[3]/div[2]"))
                     )
                     button_next.click()
 
@@ -152,20 +162,21 @@ class URLRemoverApp(ctk.CTk):
 
                     # Click nút xác nhận
                     button_success = WebDriverWait(driver, 20).until(
-                        EC.element_to_be_clickable((By.XPATH, '/html/body/div[8]/div[6]/div/div[2]/div[3]/div[2]'))
+                        EC.element_to_be_clickable((By.XPATH, '/html/body/div[9]/div[6]/div/div[2]/div[3]/div[2]'))
                     )
                     button_success.click()
 
                     time.sleep(3)
-                    elements = driver.find_elements(By.XPATH, '/html/body/div[8]/div[6]/div/div[2]/div[3]/div')
+                    elements = driver.find_elements(By.XPATH, '/html/body/div[9]/div[6]/div/div[2]/div[3]/div')
                     elements2 = driver.find_elements(By.XPATH, '/html/body/div[8]/div[6]/div/div[2]/div[3]/div[2]')
 
                     if elements:
                         # Nếu tìm thấy ít nhất 1 phần tử, Selenium sẽ click vào phần tử đầu tiên
-                        self.log(f"✔ URL này đã được xóa trước đó: {url}")
+                        self.log(f"({index}/{len(self.urls)}) ✔ URL này đã được xóa trước đó: {url}")
+
                         elements[0].click()
                     else:
-                        self.log(f"✔ Đã xóa URL: {url}")
+                        self.log(f"({index}/{len(self.urls)}) ✔ Đã xóa URL: {url}")
 
                     
                     time.sleep(2)
